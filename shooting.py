@@ -1,6 +1,6 @@
 """
 Install dependencie first with
-    pip install -r reuirements.txt
+    pip install -r requirements.txt
 """
 import scipy
 import numpy as np
@@ -111,9 +111,7 @@ class Shooter:
         plt.plot(self.t, y_true, color='green', linewidth=1, label='true y')
         plt.legend()
 
-
         # Compare with the numeric solution of the original BVP
-        
         y_bvp = self._solve_bvp()
         errors_bvp = self._error_report(y_true, y_bvp, name='BVP')
 
@@ -122,7 +120,6 @@ class Shooter:
         plt.xlabel('t')
         plt.scatter(self.t, errors_bvp, s=15)
         plt.plot(self.t, errors_bvp, linestyle='--', color='blue', linewidth=1)
-
 
         plt.figure(figsize=(10, 10))
         plt.title(f'Exact solution vs BVP approximation')
@@ -241,65 +238,64 @@ class Shooter:
         plt.plot([self.t_span[1]], [boundary], marker="x", markersize=7, markerfacecolor=color)
         plt.axvline(self.t_span[1], linestyle='--', color='lightgray', linewidth=1)
 
+def ode_k(k):
+    def q(x, k):
+        return(
+                (k**2 + pi**2)
+                * (
+                    + 2*k*cos(pi*x)
+                    + pi*sin(pi*x)
+                )
+            )
+
+    def _ode(t, y):
+        y1, y2, y3 = y
+        return [y2, y3, -2*k**3*y1 + k**2*y2 + 2*k*y3 + q(t, k)]
+    
+    return _ode
+        
+def y_k(k):
+    def y1(x):
+        return (cos(pi*x)             
+            + (
+                + exp(k*(x-1))         
+                + exp(2*k*(x-1))       
+                + exp(-k*x)            
+            ) / (2+exp(-k)))                                
+    def y2(x):
+        return (-pi*sin(pi*x) 
+            + k*(
+                - exp(k-k*x)
+                + exp(k*x) 
+                + 2*exp(k*(2*x-1))
+            ) / (1 + 2*exp(k)))
+
+    def y3(x):
+        return (-pi**2*cos(pi*x)
+            + ( k**2*exp(-k*x)
+                * (
+                    + exp(2*k*x)
+                    + 4*exp(k*(3*x-1))
+                    + exp(k)
+                )
+            ) / (1 + 2*exp(k))) 
+
+    def y4(x):
+        return (pi**3*sin(pi*x)
+            + ( k**3*exp(-k*x)
+                * (
+                    + exp(2*k*x)
+                    + 8*exp(k*(3*x-1))
+                    - exp(k)
+                )
+            ) / (1 + 2*exp(k))) 
+    return [y1, y2, y3, y4]
+
+t0, t1 = 0, 1
 
 if __name__ == "__main__":
 
-    def ode_k(k):
-        def q(x, k):
-            return(
-                    (k**2 + pi**2)
-                    * (
-                        + 2*k*cos(pi*x)
-                        + pi*sin(pi*x)
-                    )
-                )
-
-        def _ode(t, y):
-            y1, y2, y3 = y
-            return [y2, y3, -2*k**3*y1 + k**2*y2 + 2*k*y3 + q(t, k)]
-        
-        return _ode
-        
-    def y_k(k):
-        def y1(x):
-            return (cos(pi*x)             
-                + (
-                    + exp(k*(x-1))         
-                    + exp(2*k*(x-1))       
-                    + exp(-k*x)            
-                ) / (2+exp(-k)))                                
-        def y2(x):
-            return (-pi*sin(pi*x) 
-                + k*(
-                    - exp(k-k*x)
-                    + exp(k*x) 
-                    + 2*exp(k*(2*x-1))
-                ) / (1 + 2*exp(k)))
-
-        def y3(x):
-            return (-pi**2*cos(pi*x)
-                + ( k**2*exp(-k*x)
-                    * (
-                        + exp(2*k*x)
-                        + 4*exp(k*(3*x-1))
-                        + exp(k)
-                    )
-                ) / (1 + 2*exp(k))) 
-
-        def y4(x):
-            return (pi**3*sin(pi*x)
-                + ( k**3*exp(-k*x)
-                    * (
-                        + exp(2*k*x)
-                        + 8*exp(k*(3*x-1))
-                        - exp(k)
-                    )
-                ) / (1 + 2*exp(k))) 
-        return [y1, y2, y3, y4]
-
-    t0, t1 = 0, 1
-
-    for k in [1, 10, 20, 100]:
+    for k in [1, 10, 20, 25]:
         ode = ode_k(k)   
         y = y_k(k) 
         bvp = {
@@ -318,11 +314,11 @@ if __name__ == "__main__":
         solution = shooter.optimize()
         shooter.evaluate_results(y)
 
-        # try:
-        #     shooter.animate_history()
-        # except Exception as e:
-        #     print("Animation failed. Try checking ffmpeg.")
-        #     print("Error message:")
-        #     print(e)
-        # print('------- Solution -------')
-        # print(solution)
+        try:
+            shooter.animate_history()
+        except Exception as e:
+            print("Animation failed. Try checking ffmpeg.")
+            print("Error message:")
+            print(e)
+        print('------- Solution -------')
+        print(solution)
